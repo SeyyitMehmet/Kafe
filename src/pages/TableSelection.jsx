@@ -1,21 +1,24 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useTables } from '../hooks/useTables';
 import { Armchair } from 'lucide-react';
 import styles from './TableSelection.module.css';
 
 export default function TableSelection() {
-    const { tables } = useTables();
+    const { cafe } = useOutletContext();
+    const { tables, loading } = useTables(cafe.id);
     const navigate = useNavigate();
 
     const handleTableSelect = (tableId) => {
         // Save selected table to session for the user's current session
-        sessionStorage.setItem('currentTableId', tableId);
-        navigate('/');
+        sessionStorage.setItem(`tableId_${cafe.slug}`, tableId);
+        navigate(`/cafe/${cafe.slug}`);
     };
+
+    if (loading) return <div>Masalar yükleniyor...</div>;
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>Lütfen Masanızı Seçiniz</h1>
+            <h1 className={styles.title}>{cafe.name} - Masa Seçimi</h1>
             <p className={styles.subtitle}>Sipariş vermek için oturduğunuz masayı seçin</p>
 
             <div className={styles.grid}>

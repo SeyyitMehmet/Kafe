@@ -1,23 +1,69 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import { useTables } from '../hooks/useTables';
-import { initialCategories } from '../data/initialData';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, CheckCircle, Clock, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
-    const { products, addProduct, updateProduct, deleteProduct } = useProducts();
-    const { tables, history, clearTable, updateOrderItemStatus } = useTables();
+    const navigate = useNavigate();
+    const [selectedCafe, setSelectedCafe] = useState(null);
+    const [loadingCafe, setLoadingCafe] = useState(true);
+    const [daysRemaining, setDaysRemaining] = useState(null);
+
+    // Initialize with selectedCafe?.id (which might be null initially)
+    const { products, addProduct, updateProduct, deleteProduct } = useProducts(selectedCafe?.id);
+    const { tables, history, clearTable, updateOrderItemStatus, addTable, deleteTable } = useTables(selectedCafe?.id);
+
     const [activeTab, setActiveTab] = useState('orders');
-    const [dbStatus, setDbStatus] = useState('checking'); // 'checking', 'connected', 'error'
+    const [dbStatus, setDbStatus] = useState('checking');
     const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
-        checkConnection();
-    }, []);
+        // Authenticate from Local Storage
+        const authData = localStorage.getItem('cafeAuth');
+        if (!authData) {
+            navigate('/login');
+            return;
+        }
 
-    // ... (Connection check function remains same)
+        try {
+            const cafe = JSON.parse(authData);
+            if (cafe && cafe.isAuthenticated) {
+                // Fetch fresh data for subscription info
+                fetchCafeData(cafe.id).then(freshCafe => {
+                    if (freshCafe) {
+                        setSelectedCafe(freshCafe);
+                        calculateRemainingDays(freshCafe.subscription_end_date);
+                    } else {
+                        setSelectedCafe(cafe); // Fallback
+                    }
+                });
+                checkConnection();
+            } else {
+                navigate('/login');
+            }
+        } catch (e) {
+            navigate('/login');
+        } finally {
+            setLoadingCafe(false);
+        }
+    }, [navigate]);
+
+    const fetchCafeData = async (id) => {
+        const { data } = await supabase.from('cafes').select('*').eq('id', id).single();
+        return data;
+    };
+
+    const calculateRemainingDays = (dateStr) => {
+        if (!dateStr) return;
+        const now = new Date();
+        const end = new Date(dateStr);
+        const diffIndex = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+        setDaysRemaining(diffIndex);
+    };
 
     const checkConnection = async () => {
         try {
@@ -26,42 +72,53 @@ export default function AdminDashboard() {
                 setErrorMessage('Supabase Client Not Initialized');
                 return;
             }
-
-            // Try a simple query
-            const { count, error } = await supabase.from('tables').select('*', { count: 'exact', head: true });
-
+            const { error } = await supabase.from('cafes').select('count', { count: 'exact', head: true });
             if (error) {
-                console.error('DB Connection Check Failed:', error);
                 setDbStatus('error');
-                setErrorMessage(error.message || JSON.stringify(error));
+                setErrorMessage(error.message);
             } else {
-                console.log('DB Connection Success');
                 setDbStatus('connected');
                 setErrorMessage('');
             }
         } catch (err) {
-            console.error('DB Connection Exception:', err);
             setDbStatus('error');
-            setErrorMessage(err.message || 'Unknown Error');
+            setErrorMessage(err.message);
         }
     };
 
-    // ... (State definitions)
+    const handleLogout = () => {
+        localStorage.removeItem('cafeAuth');
+        navigate('/login');
+    };
+
+    // ... (Form State)
     const [editingId, setEditingId] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [formData, setFormData] = useState({
-        name: '',
-        price: '',
-        category: 'sweet',
-        description: '',
-        image: '',
+        name: '', price: '', category: '', description: '', image: '',
     });
 
-    // Calculate pending orders
-    const pendingOrders = tables.flatMap(t =>
+    // Audio Notification Logic
+    const pendingOrders = tables?.flatMap(t =>
         t.orders.filter(o => o.status !== 'delivered').map(o => ({ ...o, tableId: t.id, tableName: t.name }))
-    );
+    ) || [];
 
+    // Audio Notification Logic
+    useEffect(() => {
+        const currentCount = pendingOrders.length;
+        const prevCount = parseInt(sessionStorage.getItem('prevOrderCount') || '0');
+
+        if (currentCount > prevCount) {
+            try {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.play().catch(e => console.log('Audio play failed (interaction needed):', e));
+            } catch (e) { console.error(e); }
+        }
+
+        sessionStorage.setItem('prevOrderCount', currentCount.toString());
+    }, [pendingOrders.length]);
+
+    // ... (Handlers)
     const handleEdit = (product) => {
         setEditingId(product.id);
         setFormData({
@@ -79,7 +136,7 @@ export default function AdminDashboard() {
         setFormData({
             name: '',
             price: '',
-            category: 'sweet',
+            category: '',
             description: '',
             image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=1000',
         });
@@ -98,74 +155,87 @@ export default function AdminDashboard() {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
-            deleteProduct(id);
-        }
+        if (confirm('Bu ürünü silmek istediğinize emin misiniz?')) deleteProduct(id);
     };
 
     const handlePayment = (tableId) => {
         const table = tables.find(t => t.id === tableId);
         if (table.orders.some(o => o.status !== 'delivered')) {
-            alert('Masada hala teslim edilmemiş siparişler var!');
+            alert('Masada teslim edilmemiş siparişler var!');
             return;
         }
-        if (confirm(`Masa ${tableId} ödemesi alındı ve masa kapatılıyor. Onaylıyor musunuz?`)) {
-            clearTable(tableId);
-        }
+        if (confirm(`Masayı kapatmak istiyor musunuz?`)) clearTable(tableId);
     };
 
     const advanceItemStatus = (itemId, currentStatus) => {
-        let nextStatus;
-        if (currentStatus === 'pending') nextStatus = 'prepared';
-        else if (currentStatus === 'prepared') nextStatus = 'delivered';
-
-        if (nextStatus) {
-            updateOrderItemStatus(itemId, nextStatus);
-        }
+        let nextStatus = currentStatus === 'pending' ? 'prepared' : currentStatus === 'prepared' ? 'delivered' : null;
+        if (nextStatus) updateOrderItemStatus(itemId, nextStatus);
     };
+
+    if (loadingCafe) return <div className={styles.container}>Yükleniyor...</div>;
+    if (!selectedCafe) return (
+        <div style={{ color: 'white', padding: '2rem', textAlign: 'center' }}>
+            <h2>Oturum Bilgisi Alınamadı</h2>
+            <p>Lütfen tekrar giriş yapınız.</p>
+            <button
+                onClick={() => navigate('/login')}
+                style={{ padding: '10px 20px', cursor: 'pointer', marginTop: '10px' }}
+            >
+                Giriş Sayfasına Dön
+            </button>
+        </div>
+    );
 
     return (
         <div className={styles.container}>
             <header className={styles.header}>
                 <div className={styles.titleSection}>
-                    <h1>Yönetim Paneli</h1>
+                    <div className={styles.topRow}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                            <h1>{selectedCafe.name} Yönetim Paneli</h1>
+                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                {daysRemaining !== null && (
+                                    <div style={{
+                                        padding: '5px 10px',
+                                        borderRadius: '8px',
+                                        background: daysRemaining < 7 ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)',
+                                        color: daysRemaining < 7 ? '#ef4444' : '#4ade80',
+                                        fontSize: '0.9rem',
+                                        display: 'flex', alignItems: 'center', gap: '5px'
+                                    }}>
+                                        <Clock size={16} />
+                                        {daysRemaining > 3000 ? 'Sınırsız' : `${daysRemaining} Gün Kaldı`}
+                                    </div>
+                                )}
+                                <button onClick={handleLogout} className={styles.statusActionBtn} style={{ background: 'rgba(255,50,50,0.2)' }}>Çıkış Yap</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div
                         className={`${styles.statusBadge} ${dbStatus === 'connected' ? styles.statusSuccess : styles.statusError}`}
                         title={errorMessage}
-                        onClick={() => errorMessage && alert(errorMessage)}
-                        style={{ cursor: errorMessage ? 'help' : 'default' }}
                     >
-                        {dbStatus === 'checking' && <span>Bağlanıyor...</span>}
-                        {dbStatus === 'connected' && <><Wifi size={16} /> <span>Veritabanı Yayında</span></>}
-                        {dbStatus === 'error' && <><WifiOff size={16} /> <span>Bağlantı Hatası: {errorMessage.slice(0, 20)}...</span></>}
+                        {dbStatus === 'connected' ? <><Wifi size={16} /> Veritabanı Aktif</> : <><WifiOff size={16} /> Hatası</>}
                     </div>
                 </div>
 
                 <div className={styles.tabs}>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === 'orders' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('orders')}
-                    >
-                        <ChefHat size={18} /> Bekleyen Siparişler
+                    <button className={`${styles.tabBtn} ${activeTab === 'orders' ? styles.activeTab : ''}`} onClick={() => setActiveTab('orders')}>
+                        <ChefHat size={18} /> Siparişler
                         {pendingOrders.length > 0 && <span className={styles.badgeCount}>{pendingOrders.length}</span>}
                     </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === 'tables' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('tables')}
-                    >
-                        <Armchair size={18} /> Masa Hesapları
+                    <button className={`${styles.tabBtn} ${activeTab === 'tables' ? styles.activeTab : ''}`} onClick={() => setActiveTab('tables')}>
+                        <Armchair size={18} /> Masalar
                     </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === 'products' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('products')}
-                    >
+                    <button className={`${styles.tabBtn} ${activeTab === 'products' ? styles.activeTab : ''}`} onClick={() => setActiveTab('products')}>
                         <Receipt size={18} /> Ürünler
                     </button>
-                    <button
-                        className={`${styles.tabBtn} ${activeTab === 'history' ? styles.activeTab : ''}`}
-                        onClick={() => setActiveTab('history')}
-                    >
-                        <Receipt size={18} /> Hesap Geçmişi
+                    <button className={`${styles.tabBtn} ${activeTab === 'qr' ? styles.activeTab : ''}`} onClick={() => setActiveTab('qr')}>
+                        <QrCode size={18} /> QR Kodlar
+                    </button>
+                    <button className={`${styles.tabBtn} ${activeTab === 'history' ? styles.activeTab : ''}`} onClick={() => setActiveTab('history')}>
+                        <Receipt size={18} /> Geçmiş
                     </button>
                 </div>
             </header>
@@ -182,7 +252,7 @@ export default function AdminDashboard() {
                             <div key={table.id} className={styles.kitchenCard}>
                                 <div className={styles.kitchenHeader}>
                                     <h3>{table.name}</h3>
-                                    <span className={styles.timeAgo}>Az önce</span>
+                                    <span className={styles.timeAgo}>Aktif</span>
                                 </div>
                                 <div className={styles.kitchenItems}>
                                     {tablePendingOrders.map((item) => (
@@ -191,11 +261,8 @@ export default function AdminDashboard() {
                                                 <span className={styles.qty}>{item.quantity}x</span>
                                                 <span className={styles.prodName}>{item.name}</span>
                                             </div>
-                                            <button
-                                                className={styles.statusActionBtn}
-                                                onClick={() => advanceItemStatus(item.id, item.status)}
-                                            >
-                                                {item.status === 'pending' ? 'Onayla / Hazırla' : 'Teslim Et'}
+                                            <button className={styles.statusActionBtn} onClick={() => advanceItemStatus(item.id, item.status)}>
+                                                {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
                                             </button>
                                         </div>
                                     ))}
@@ -208,48 +275,54 @@ export default function AdminDashboard() {
 
             {/* TABLES TAB */}
             {activeTab === 'tables' && (
-                <div className={styles.tablesGrid}>
-                    {tables.length > 0 ? tables.map(table => (
-                        <div key={table.id} className={`${styles.tableCard} ${table.status === 'occupied' ? styles.occupiedCard : ''}`}>
-                            <div className={styles.cardHeader}>
-                                <h3>{table.name}</h3>
-                                <span className={`${styles.tableStatusBadge} ${table.status === 'occupied' ? styles.statusOccupied : ''}`}>
-                                    {table.status === 'occupied' ? 'DOLU' : 'BOŞ'}
-                                </span>
-                            </div>
-
-                            <div className={styles.cardBody}>
-                                {table.orders.length > 0 ? (
-                                    <div className={styles.orderList}>
-                                        <div className={styles.orderScroll}>
-                                            {table.orders.map((item, idx) => (
-                                                <div key={idx} className={styles.orderItem}>
-                                                    <span>{item.quantity}x {item.name}</span>
-                                                    <span>
-                                                        {item.status === 'delivered' ? <CheckCircle size={14} color="green" /> : <Clock size={14} color="orange" />}
-                                                        {' '}{item.price * item.quantity} ₺
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className={styles.orderTotal}>
-                                            <span>TOPLAM:</span>
-                                            <span>{table.total} ₺</span>
-                                        </div>
+                <>
+                    <div className={styles.actionsBar}>
+                        <button className={styles.addButton} onClick={addTable}>
+                            <Plus size={20} /> Masa Ekle
+                        </button>
+                    </div>
+                    <div className={styles.tablesGrid}>
+                        {tables.length > 0 ? tables.map(table => (
+                            <div key={table.id} className={`${styles.tableCard} ${table.status === 'occupied' ? styles.occupiedCard : ''}`}>
+                                <div className={styles.cardHeader}>
+                                    <h3>{table.name}</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        <span className={`${styles.tableStatusBadge} ${table.status === 'occupied' ? styles.statusOccupied : ''}`}>
+                                            {table.status === 'occupied' ? 'DOLU' : 'BOŞ'}
+                                        </span>
+                                        {table.status === 'empty' && (
+                                            <button onClick={() => deleteTable(table.id)} style={{ background: 'none', border: 'none', color: 'red', cursor: 'pointer' }}>
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                     </div>
-                                ) : (
-                                    <p className={styles.emptyText}>Hesap Yok</p>
+                                </div>
+                                {/* ... Card Body ... */}
+                                <div className={styles.cardBody}>
+                                    {table.orders.length > 0 ? (
+                                        <div className={styles.orderList}>
+                                            <div className={styles.orderScroll}>
+                                                {table.orders.map((item, idx) => (
+                                                    <div key={idx} className={styles.orderItem}>
+                                                        <span>{item.quantity}x {item.name}</span>
+                                                        <span>{item.price * item.quantity} ₺</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className={styles.orderTotal}>
+                                                <span>TOPLAM:</span>
+                                                <span>{table.total} ₺</span>
+                                            </div>
+                                        </div>
+                                    ) : <p className={styles.emptyText}>Hesap Yok</p>}
+                                </div>
+                                {table.status === 'occupied' && (
+                                    <button className={styles.payBtn} onClick={() => handlePayment(table.id)}>Ödeme Al & Kapat</button>
                                 )}
                             </div>
-
-                            {table.status === 'occupied' && (
-                                <button className={styles.payBtn} onClick={() => handlePayment(table.id)}>
-                                    Ödeme Al & Kapat
-                                </button>
-                            )}
-                        </div>
-                    )) : <p>Masalar yükleniyor...</p>}
-                </div>
+                        )) : <p>Masa bulunamadı.</p>}
+                    </div>
+                </>
             )}
 
             {/* PRODUCTS TAB */}
@@ -263,142 +336,126 @@ export default function AdminDashboard() {
                     <div className={styles.tableContainer}>
                         <table className={styles.table}>
                             <thead>
-                                <tr>
-                                    <th>Ürün Adı</th>
-                                    <th>Kategori</th>
-                                    <th>Fiyat</th>
-                                    <th>İşlemler</th>
-                                </tr>
+                                <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>İşlemler</th></tr>
                             </thead>
                             <tbody>
                                 {products.length > 0 ? products.map(product => (
                                     <tr key={product.id}>
                                         <td>{product.name}</td>
-                                        <td>
-                                            <span className={styles.badge}>
-                                                {initialCategories.find(c => c.id === product.category)?.name || product.category}
-                                            </span>
-                                        </td>
+                                        <td><span className={styles.badge}>{product.category}</span></td>
                                         <td>{product.price} ₺</td>
                                         <td>
                                             <div className={styles.actions}>
-                                                <button className={styles.iconBtn} onClick={() => handleEdit(product)} title="Düzenle">
-                                                    <Pencil size={18} />
-                                                </button>
-                                                <button className={`${styles.iconBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(product.id)} title="Sil">
-                                                    <Trash2 size={18} />
-                                                </button>
+                                                <button className={styles.iconBtn} onClick={() => handleEdit(product)}><Pencil size={18} /></button>
+                                                <button className={`${styles.iconBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(product.id)}><Trash2 size={18} /></button>
                                             </div>
                                         </td>
                                     </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan="4" className={styles.emptyText}>Ürün bulunamadı veya yükleniyor...</td>
-                                    </tr>
-                                )}
+                                )) : <tr><td colSpan="4" className={styles.emptyText}>Ürün bulunamadı.</td></tr>}
                             </tbody>
                         </table>
                     </div>
                 </>
             )}
 
-            {/* HISTORY TAB */}
-            {activeTab === 'history' && (
-                <div className={styles.tableContainer}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Tarih</th>
-                                <th>Masa</th>
-                                <th>Tutar</th>
-                                <th>Detay</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {history && history.length > 0 ? history.map(order => (
-                                <tr key={order.id}>
-                                    <td>{order.date}</td>
-                                    <td>{order.tableName}</td>
-                                    <td>{order.total} ₺</td>
-                                    <td>
-                                        <div className={styles.historyItems}>
-                                            {order.items.map((item, idx) => (
-                                                <span key={idx} className={styles.historyItemBadge}>
-                                                    {item.quantity}x {item.name}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="4" className={styles.emptyText}>Henüz ödeme geçmişi yok.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+            {/* QR TAB */}
+            {activeTab === 'qr' && (
+                <div className={styles.qrGrid}>
+                    {tables.length > 0 ? tables.map(table => (
+                        <div key={table.id} className={styles.qrCard} id={`qr-${table.id}`}>
+                            <h3>{table.name}</h3>
+                            <div className={styles.qrWrapper}>
+                                <QRCodeCanvas
+                                    value={`${window.location.origin}/cafe/${selectedCafe.slug}/table/${table.token}`}
+                                    size={150} level={"H"} includeMargin={true}
+                                />
+                            </div>
+                            <div className={styles.qrActions}>
+                                <a
+                                    href={`/cafe/${selectedCafe.slug}/table/${table.token}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={styles.visitLinkBtn}
+                                >
+                                    Müşteri Ekranına Git ↗
+                                </a>
+                                <button className={styles.printBtn} onClick={() => {
+                                    const canvas = document.getElementById(`qr-${table.id}`)?.querySelector('canvas');
+                                    if (canvas) {
+                                        const link = document.createElement('a');
+                                        link.download = `${selectedCafe.name}-${table.name}-QR.png`;
+                                        link.href = canvas.toDataURL();
+                                        link.click();
+                                    }
+                                }}>İndir</button>
+                            </div>
+                        </div>
+                    )) : <p>Masa bulunamadı.</p>}
                 </div>
             )}
 
-            {/* Modal - Same as before */}
+            {/* HISTORY TAB */}
+            {activeTab === 'history' && (
+                <div className={styles.historyGrid}>
+                    {history && history.length > 0 ? history.map((order, index) => (
+                        <div key={order.id || index} className={styles.receiptCard}>
+                            <div className={styles.receiptHeader}>
+                                <span className={styles.receiptTable}>{order.tableName}</span>
+                                <span className={styles.receiptDate}>{order.date}</span>
+                            </div>
+
+                            <div className={styles.receiptItems}>
+                                {order.items.map((item, idx) => (
+                                    <div key={idx} className={styles.receiptItem}>
+                                        <div className={styles.receiptItemName}>
+                                            <span>{item.quantity}x</span>
+                                            <span>{item.name}</span>
+                                        </div>
+                                        <span>{item.price * item.quantity} ₺</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={styles.receiptTotal}>
+                                <span>TOPLAM:</span>
+                                <span>{order.total} ₺</span>
+                            </div>
+                        </div>
+                    )) : <p className={styles.emptyText}>Henüz bir geçmiş bulunmuyor.</p>}
+                </div>
+            )}
+
+            {/* Modal */}
             {isFormOpen && (
                 <div className={styles.modalOverlay}>
                     <div className={styles.modal}>
                         <div className={styles.modalHeader}>
-                            <h2>{editingId ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle'}</h2>
-                            <button className={styles.closeBtn} onClick={() => setIsFormOpen(false)}>
-                                <X size={24} />
-                            </button>
+                            <h2>{editingId ? 'Düzenle' : 'Ekle'}</h2>
+                            <button className={styles.closeBtn} onClick={() => setIsFormOpen(false)}><X size={24} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
                             <div className={styles.formGroup}>
                                 <label>Ürün Adı</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                />
+                                <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
                             <div className={styles.row}>
                                 <div className={styles.formGroup}>
-                                    <label>Fiyat (₺)</label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min="0"
-                                        value={formData.price}
-                                        onChange={e => setFormData({ ...formData, price: e.target.value })}
-                                    />
+                                    <label>Fiyat</label>
+                                    <input type="number" required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} />
                                 </div>
                                 <div className={styles.formGroup}>
                                     <label>Kategori</label>
-                                    <select
-                                        value={formData.category}
-                                        onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                    >
-                                        {initialCategories.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
+                                    <input type="text" required list="cats" value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} />
+                                    <datalist id="cats">{[...new Set(products.map(p => p.category))].map(c => <option key={c} value={c} />)}</datalist>
                                 </div>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Açıklama</label>
-                                <textarea
-                                    required
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                />
+                                <textarea required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Görsel URL</label>
-                                <input
-                                    type="url"
-                                    value={formData.image}
-                                    onChange={e => setFormData({ ...formData, image: e.target.value })}
-                                    placeholder="https://..."
-                                />
+                                <input type="url" value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
                             </div>
                             <button type="submit" className={styles.submitBtn}>Kaydet</button>
                         </form>

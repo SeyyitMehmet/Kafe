@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import { useTables } from '../hooks/useTables';
-import { initialCategories } from '../data/initialData';
 import ProductCard from '../components/ProductCard';
 import Cart from '../components/Cart';
 import { Clock, CheckCircle, ChefHat } from 'lucide-react';
@@ -10,24 +9,70 @@ import styles from './CustomerHome.module.css';
 
 export default function CustomerHome() {
     const navigate = useNavigate();
-    const { products } = useProducts();
-    const { tables, addOrder } = useTables();
+    const { tableId: paramTableId } = useParams();
+    const { cafe } = useOutletContext();
 
-    const [activeCategory, setActiveCategory] = useState(initialCategories[0].id);
+    // Hooks using cafe.id
+    const { products, loading: productsLoading } = useProducts(cafe?.id);
+    const { tables, addOrder, loading: tablesLoading } = useTables(cafe?.id);
+
+    const [activeCategory, setActiveCategory] = useState(null);
     const [cart, setCart] = useState([]);
     const [tableId, setTableId] = useState(null);
 
-    useEffect(() => {
-        const activeTable = sessionStorage.getItem('currentTableId');
-        if (!activeTable) {
-            navigate('/select-table');
-        } else {
-            setTableId(Number(activeTable));
-        }
-    }, [navigate]);
+    // Extract unique categories from products
+    const categories = useMemo(() => {
+        const uniqueCats = [...new Set(products.map(p => p.category))];
+        return uniqueCats.map(c => ({ id: c, name: c })); // Simple mapping since category is text
+    }, [products]);
 
-    const currentTable = tables.find(t => t.id === tableId);
+    // Set active category when products load
+    useEffect(() => {
+        if (categories.length > 0 && !activeCategory) {
+            setActiveCategory(categories[0].id);
+        }
+    }, [categories, activeCategory]);
+
+    // Handle Table Token logic
+    useEffect(() => {
+        if (paramTableId) {
+            // paramTableId is now the TOKEN (uuid)
+            setTableId(paramTableId);
+            // Verify if this token corresponds to a valid table in this cafe
+            // The tables hook fetches all tables for this cafe
+        } else {
+            // If no token in URL, they cannot access.
+            // QR Code is mandatory.
+        }
+    }, [paramTableId]);
+
+    // Find current table data by TOKEN
+    const currentTable = tables.find(t => t.token === tableId);
+
+    // Filter products
     const filteredProducts = products.filter(p => p.category === activeCategory);
+
+    if (productsLoading || tablesLoading) return <div>Yükleniyor...</div>;
+
+    // Security Check: If tableId exists but no matching table found in this cafe => Invalid Token
+    if (tableId && !currentTable && tables.length > 0) {
+        return (
+            <div className={styles.container} style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
+                <h2>Geçersiz Masa Kodu</h2>
+                <p>Lütfen masanızdaki QR kodu tekrar okutunuz.</p>
+            </div>
+        );
+    }
+
+    // If no Token present
+    if (!tableId) {
+        return (
+            <div className={styles.container} style={{ textAlign: 'center', padding: '2rem', color: 'white' }}>
+                <h2>Hoşgeldiniz</h2>
+                <p>Lütfen masanızdaki QR kodu okutunuz.</p>
+            </div>
+        );
+    }
 
     const handleAddToCart = (product) => {
         setCart(prev => {
@@ -49,7 +94,7 @@ export default function CustomerHome() {
 
     const handlePlaceOrder = () => {
         if (confirm('Siparişi onaylıyor musunuz?')) {
-            addOrder(tableId, cart);
+            addOrder(currentTable.id, cart); // Changed tableId (token) to currentTable.id (numeric ID)
             setCart([]);
             alert('Siparişiniz alındı! Onay bekleniyor.');
         }
@@ -73,13 +118,14 @@ export default function CustomerHome() {
         }
     };
 
-    if (!tableId) return null;
+    if (productsLoading || tablesLoading) return <div>Yükleniyor...</div>;
+    if (!tableId) return null; // Wait for navigation
 
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <div className={styles.tableBadge}>Masa {tableId}</div>
-                <h1 className={styles.title}>Menü</h1>
+                <div className={styles.tableBadge}>Masa {currentTable?.name || tableId}</div>
+                <h1 className={styles.title}>{cafe.name} Menü</h1>
                 <p className={styles.subtitle}>Lezzetli seçeneklerimizi keşfedin</p>
             </header>
 
@@ -106,7 +152,7 @@ export default function CustomerHome() {
             )}
 
             <div className={styles.tabs}>
-                {initialCategories.map(category => (
+                {categories.map(category => (
                     <button
                         key={category.id}
                         className={`${styles.tab} ${activeCategory === category.id ? styles.activeTab : ''}`}

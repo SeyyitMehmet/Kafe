@@ -2,37 +2,46 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { initialProducts } from '../data/initialData';
 
-export function useProducts() {
+export function useProducts(cafeId) {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            // Safety check if supabase is mocked or invalid
             if (!supabase || !supabase.from) {
                 console.warn('Supabase client not ready, using initial data');
-                setProducts(initialProducts); // Fallback to local data
+                setProducts(initialProducts);
                 return;
             }
 
-            const { data, error } = await supabase
+            if (!cafeId) {
+                // If no cafe is selected (e.g. initial load or not logged in), return empty to prevent data leak
+                setProducts([]);
+                setLoading(false);
+                return;
+            }
+
+            let query = supabase
                 .from('products')
                 .select('*')
+                .eq('cafe_id', cafeId) // Strict filtering
                 .order('id', { ascending: true });
+
+            // Removed conditional cafeId check because we enforce it above
+
+            const { data, error } = await query;
 
             if (error) throw error;
 
-            // Map DB 'image_url' to frontend 'image'
             const mappedData = data.map(item => ({
                 ...item,
-                image: item.image_url // Use image_url from DB as image in app
+                image: item.image_url
             }));
 
             setProducts(mappedData);
         } catch (error) {
             console.error('Error fetching products:', error);
-            // Fallback to initial data on error
             setProducts(initialProducts);
         } finally {
             setLoading(false);
@@ -41,17 +50,17 @@ export function useProducts() {
 
     useEffect(() => {
         fetchProducts();
-    }, []);
+    }, [cafeId]);
 
     const addProduct = async (product) => {
         if (!supabase || !supabase.from) return;
         try {
-            // Prepare payload for DB
             const dbPayload = {
                 ...product,
-                image_url: product.image, // Map frontend 'image' to DB 'image_url'
+                image_url: product.image,
+                cafe_id: cafeId // Ensure product is linked to current cafe
             };
-            delete dbPayload.image; // Remove frontend-only field
+            delete dbPayload.image;
 
             const { data, error } = await supabase
                 .from('products')
@@ -60,7 +69,6 @@ export function useProducts() {
 
             if (error) throw error;
 
-            // Map back for local state
             const newProduct = { ...data[0], image: data[0].image_url };
             setProducts(prev => [...prev, newProduct]);
         } catch (error) {
