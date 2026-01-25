@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Coffee, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import styles from './Navbar.module.css';
 
 export default function Navbar() {
@@ -7,7 +7,7 @@ export default function Navbar() {
         <nav className={styles.navbar}>
             <div className={styles.container}>
                 <Link to="/" className={styles.logo}>
-                    <Coffee className={styles.icon} />
+                    <img src="/logo.png" alt="Logo" className={styles.logoImage} />
                     <span>Kafe İçi</span>
                 </Link>
                 {/* Admin link hidden for customers */}

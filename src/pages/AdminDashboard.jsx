@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import { useTables } from '../hooks/useTables';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock, Upload, Image as ImageIcon, Info } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import styles from './AdminDashboard.module.css';
 
@@ -143,6 +143,46 @@ export default function AdminDashboard() {
         setIsFormOpen(true);
     };
 
+    const [dragActive, setDragActive] = useState(false);
+
+    const handleDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === "dragenter" || e.type === "dragover") {
+            setDragActive(true);
+        } else if (e.type === "dragleave") {
+            setDragActive(false);
+        }
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            handleFile(e.target.files[0]);
+        }
+    };
+
+    const handleFile = (file) => {
+        if (!file.type.startsWith('image/')) {
+            alert('Lütfen geçerli bir resim dosyası yükleyin.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            setFormData(prev => ({ ...prev, image: e.target.result }));
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         const productData = { ...formData, price: Number(formData.price) };
@@ -207,6 +247,22 @@ export default function AdminDashboard() {
                                         {daysRemaining > 3000 ? 'Sınırsız' : `${daysRemaining} Gün Kaldı`}
                                     </div>
                                 )}
+                                <a
+                                    href="https://www.npcengineering.com/login"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={styles.statusActionBtn}
+                                    style={{
+                                        background: 'rgba(37, 99, 235, 0.2)',
+                                        color: '#2563eb',
+                                        textDecoration: 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        height: '100%'
+                                    }}
+                                >
+                                    Üyeliği Uzat
+                                </a>
                                 <button onClick={handleLogout} className={styles.statusActionBtn} style={{ background: 'rgba(255,50,50,0.2)' }}>Çıkış Yap</button>
                             </div>
                         </div>
@@ -454,8 +510,63 @@ export default function AdminDashboard() {
                                 <textarea required value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
                             </div>
                             <div className={styles.formGroup}>
-                                <label>Görsel URL</label>
-                                <input type="url" value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} />
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <label>Ürün Görseli</label>
+                                    <div className={styles.tooltipContainer}>
+                                        <Info size={16} color="#9ca3af" />
+                                        <span className={styles.tooltipText}>
+                                            Görsel eklemek için bilgisayarınızdan bir dosya sürükleyip bırakabilir, seçebilir veya doğrudan bir URL girebilirsiniz.
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''}`}
+                                    onDragEnter={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDrop={handleDrop}
+                                    onClick={() => document.getElementById('fileInput').click()}
+                                >
+                                    <input
+                                        type="file"
+                                        id="fileInput"
+                                        style={{ display: 'none' }}
+                                        accept="image/*"
+                                        onChange={handleFileSelect}
+                                    />
+
+                                    {formData.image ? (
+                                        <div style={{ position: 'relative', width: '100%' }}>
+                                            <img src={formData.image} alt="Preview" className={styles.imagePreview} />
+                                            <button
+                                                type="button"
+                                                className={styles.removeImageBtn}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFormData({ ...formData, image: '' });
+                                                }}
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className={styles.uploadPlaceholder}>
+                                            <Upload size={32} color="#666" />
+                                            <span>Resim Sürükle veya Seç</span>
+                                            <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>(PNG, JPG, GIF)</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={styles.orDivider}>veya URL Girin</div>
+
+                                <input
+                                    type="url"
+                                    placeholder="https://example.com/image.jpg"
+                                    value={formData.image}
+                                    onChange={e => setFormData({ ...formData, image: e.target.value })}
+                                />
                             </div>
                             <button type="submit" className={styles.submitBtn}>Kaydet</button>
                         </form>

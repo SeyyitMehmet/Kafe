@@ -34,13 +34,23 @@ export default function SubscriptionExpired() {
                     </span>
                 </div>
 
-                <button
-                    onClick={() => navigate('/login')}
-                    className={styles.submitBtn}
-                    style={{ background: '#4b5563' }}
-                >
-                    Giriş Ekranına Dön
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1rem' }}>
+                    <a
+                        href="https://www.npcengineering.com/login"
+                        className={styles.submitBtn}
+                        style={{ background: '#2563eb', textDecoration: 'none', display: 'inline-block' }}
+                    >
+                        Üyeliği Uzat
+                    </a>
+
+                    <button
+                        onClick={() => navigate('/login')}
+                        className={styles.submitBtn}
+                        style={{ background: '#4b5563' }}
+                    >
+                        Giriş Ekranına Dön
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Lock } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 import styles from './Login.module.css';
 
 export default function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
@@ -99,15 +100,51 @@ export default function Login() {
                     </div>
                     <div className={styles.formGroup}>
                         <label>Şifre</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="admin123"
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="admin123"
+                                style={{ width: '100%', paddingRight: '40px' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '10px',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    color: 'var(--color-text-muted)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                {showPassword ? <EyeOff size={20} color="#9ca3af" /> : <Eye size={20} color="#9ca3af" />}
+                            </button>
+                        </div>
                     </div>
                     {error && <p className={styles.error}>{error}</p>}
                     <button type="submit" className={styles.submitBtn}>Giriş Yap</button>
+
+                    <a
+                        href="https://www.npcengineering.com/login"
+                        className={styles.submitBtn}
+                        style={{
+                            background: '#10b981',
+                            marginTop: '1rem',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            display: 'block'
+                        }}
+                    >
+                        Üye Ol
+                    </a>
                 </form>
             </div>
         </div>
