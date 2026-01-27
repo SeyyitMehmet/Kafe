@@ -1,18 +1,41 @@
-import { Trash2, ShoppingBag } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2, ShoppingBag, ChevronUp, X } from 'lucide-react';
 import styles from './Cart.module.css';
 
 export default function Cart({ items, onRemove, onComplete }) {
+    const [isOpen, setIsOpen] = useState(false);
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
 
     if (items.length === 0) {
         return null;
     }
 
+    if (!isOpen) {
+        return (
+            <div className={styles.minimizedCart} onClick={() => setIsOpen(true)}>
+                <div className={styles.minimizedLeft}>
+                    <ShoppingBag size={20} className={styles.bounceIcon} />
+                    <span>Sepet ({totalQty})</span>
+                </div>
+                <div className={styles.minimizedRight}>
+                    <span className={styles.minimizedTotal}>{total} ₺</span>
+                    <ChevronUp size={20} />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.cartContainer}>
             <div className={styles.header}>
-                <ShoppingBag size={20} />
-                <h3>Sepetim ({items.length})</h3>
+                <div className={styles.headerTitle}>
+                    <ShoppingBag size={20} />
+                    <h3>Sepetim ({items.length})</h3>
+                </div>
+                <button onClick={() => setIsOpen(false)} className={styles.closeBtn}>
+                    <X size={20} />
+                </button>
             </div>
 
             <div className={styles.items}>

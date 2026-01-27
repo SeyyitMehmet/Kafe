@@ -4,6 +4,7 @@ import CustomerHome from './pages/CustomerHome';
 import AdminDashboard from './pages/AdminDashboard';
 import TableSelection from './pages/TableSelection';
 import Login from './pages/Login';
+import Feedback from './pages/Feedback';
 import ProtectedRoute from './components/ProtectedRoute';
 import CafeLayout from './components/CafeLayout';
 
@@ -25,6 +26,7 @@ function App() {
 
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/feedback" element={<Feedback />} />
 
           {/* Maintenance Guard wraps access to Cafe and Admin pages */}
           <Route element={<MaintenanceGuard />}>

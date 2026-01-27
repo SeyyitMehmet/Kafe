@@ -1,0 +1,105 @@
+.container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+}
+
+.card {
+    background-color: var(--color-bg-card);
+    padding: 2rem;
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: var(--shadow-glow);
+}
+
+.backBtn {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    padding: 0;
+}
+
+.backBtn:hover {
+    color: var(--color-primary);
+}
+
+.title {
+    color: var(--color-text-main);
+    margin-bottom: 0.5rem;
+    font-size: 1.8rem;
+    text-align: center;
+}
+
+.subtitle {
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.formGroup input,
+.formGroup textarea {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-main);
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
+}
+
+.submitBtn {
+    background-color: var(--color-primary);
+    color: #000;
+    padding: 1rem;
+    font-weight: 700;
+    margin-top: 1rem;
+    transition: transform 0.2s;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.submitBtn:hover {
+    transform: translateY(-2px);
+    background-color: #ffd700;
+}

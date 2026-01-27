@@ -247,6 +247,19 @@ export default function AdminDashboard() {
                                         {daysRemaining > 3000 ? 'Sınırsız' : `${daysRemaining} Gün Kaldı`}
                                     </div>
                                 )}
+                                <button
+                                    onClick={() => navigate('/feedback')}
+                                    className={styles.statusActionBtn}
+                                    style={{
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '5px'
+                                    }}
+                                >
+                                    <Info size={16} /> Destek
+                                </button>
                                 <a
                                     href="https://www.npcengineering.com/login"
                                     target="_blank"

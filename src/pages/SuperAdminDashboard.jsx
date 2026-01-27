@@ -18,6 +18,18 @@ export default function SuperAdminDashboard() {
 
     useEffect(() => {
         initializeDashboard();
+
+        // Real-time listener for Orders to update revenue instantly
+        const subscription = supabase
+            .channel('super-admin-revenue')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+                fetchData();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
     }, []);
 
     const initializeDashboard = async () => {
@@ -27,13 +39,50 @@ export default function SuperAdminDashboard() {
     };
 
     const fetchData = async () => {
-        const { data, error } = await supabase
+        // 1. Fetch Cafes
+        const { data: cafesData, error: cafesError } = await supabase
             .from('cafes')
             .select('*')
             .neq('role', 'super_admin')
             .order('id');
 
-        if (!error && data) setCafes(data);
+        if (cafesError || !cafesData) {
+            setLoading(false);
+            return;
+        }
+
+        // 2. Fetch Paid Orders for all these cafes to calculate Revenue
+        // Ideally we would use a Postgres Function or View for this, but doing it in JS for now since user wants quick edit
+        const activeCafeIds = cafesData.map(c => c.id);
+        const { data: ordersData } = await supabase
+            .from('orders')
+            .select(`
+                cafe_id,
+                order_items (
+                    price,
+                    quantity
+                )
+            `)
+            .in('cafe_id', activeCafeIds)
+            .eq('is_paid', true);
+
+        // 3. Calculate Totals
+        const revenueMap = {};
+        if (ordersData) {
+            ordersData.forEach(order => {
+                const orderTotal = order.order_items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                if (!revenueMap[order.cafe_id]) revenueMap[order.cafe_id] = 0;
+                revenueMap[order.cafe_id] += orderTotal;
+            });
+        }
+
+        // 4. Merge Revenue into Cafes
+        const cafesWithRevenue = cafesData.map(cafe => ({
+            ...cafe,
+            total_revenue: revenueMap[cafe.id] || 0
+        }));
+
+        setCafes(cafesWithRevenue);
         setLoading(false);
     };
 
@@ -328,6 +377,7 @@ export default function SuperAdminDashboard() {
                                 <th>Oto. Yenileme</th>
                                 <th>Durum</th>
                                 <th>Abonelik Bitiş</th>
+                                <th>Toplam Ciro</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>
@@ -398,6 +448,11 @@ export default function SuperAdminDashboard() {
                                                 )}
                                                 {daysRemaining > 3650 && <span style={{ fontSize: '1.2em' }}>∞</span>}
                                             </div>
+                                        </td>
+                                        <td>
+                                            <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                                                {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(cafe.total_revenue || 0)}
+                                            </span>
                                         </td>
                                         <td style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                             <button
