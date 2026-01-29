@@ -168,3 +168,28 @@
     text-decoration: line-through;
     opacity: 0.7;
 }
+
+/* Item Details with Price */
+.itemDetails {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.itemPrice {
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.outOfStockItem {
+    opacity: 0.6;
+}
+
+.outOfStockItem .statusName {
+    text-decoration: line-through;
+}
+
+.outOfStockItem .itemPrice {
+    color: #ef4444;
+}

@@ -67,7 +67,9 @@ export function useTables(cafeId) {
                         }))
                     );
 
-                const total = tableOrders.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                const total = tableOrders
+                    .filter(item => item.status !== 'out_of_stock')
+                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
                 return {
                     ...table,

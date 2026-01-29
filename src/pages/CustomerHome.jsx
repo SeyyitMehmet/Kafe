@@ -132,26 +132,41 @@ export default function CustomerHome() {
             </header>
 
             {/* Order History / Status Section */}
-            {currentTable?.orders.length > 0 && (
-                <div className={styles.orderStatusContainer}>
-                    <div className={styles.statusHeaderRow}>
-                        <h3>Sipariş Durumu</h3>
-                        <span className={styles.totalBadge}>Toplam: {currentTable.total} ₺</span>
-                    </div>
-                    <div className={styles.statusList}>
-                        {currentTable.orders.slice().reverse().map((item) => (
-                            <div key={item.id} className={styles.statusItem}>
-                                <div className={styles.statusInfo}>
-                                    <span className={styles.statusName}>{item.quantity}x {item.name}</span>
-                                    <span className={`${styles.statusBadge} ${styles[item.status]}`}>
-                                        {getStatusIcon(item.status)} {getStatusText(item.status)}
-                                    </span>
+            {currentTable?.orders.length > 0 && (() => {
+                // Calculate total excluding out_of_stock items
+                const activeTotal = currentTable.orders
+                    .filter(item => item.status !== 'out_of_stock')
+                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                return (
+                    <div className={styles.orderStatusContainer}>
+                        <div className={styles.statusHeaderRow}>
+                            <h3>Sipariş Durumu</h3>
+                            <span className={styles.totalBadge}>Toplam: {activeTotal} ₺</span>
+                        </div>
+                        <div className={styles.statusList}>
+                            {currentTable.orders.slice().reverse().map((item) => (
+                                <div key={item.id} className={`${styles.statusItem} ${item.status === 'out_of_stock' ? styles.outOfStockItem : ''}`}>
+                                    <div className={styles.statusInfo}>
+                                        <div className={styles.itemDetails}>
+                                            <span className={styles.statusName}>{item.quantity}x {item.name}</span>
+                                            <span className={styles.itemPrice}>
+                                                {item.status === 'out_of_stock'
+                                                    ? <s>{item.price * item.quantity} ₺</s>
+                                                    : `${item.price * item.quantity} ₺`
+                                                }
+                                            </span>
+                                        </div>
+                                        <span className={`${styles.statusBadge} ${styles[item.status]}`}>
+                                            {getStatusIcon(item.status)} {getStatusText(item.status)}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             <div className={styles.tabs}>
                 {categories.map(category => (
