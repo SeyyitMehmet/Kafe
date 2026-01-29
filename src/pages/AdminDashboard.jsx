@@ -318,40 +318,71 @@ export default function AdminDashboard() {
             {/* ORDERS TAB */}
             {activeTab === 'orders' && (
                 <div className={styles.ordersGrid}>
-                    {pendingOrders.length === 0 && <p className={styles.emptyText}>Bekleyen yeni sipariş yok.</p>}
+                    {tables.filter(t => t.orders.length > 0).length === 0 && (
+                        <p className={styles.emptyText}>Aktif sipariş yok.</p>
+                    )}
                     {tables.length > 0 && tables.map(table => {
-                        const tablePendingOrders = table.orders.filter(o => o.status !== 'delivered' && o.status !== 'out_of_stock');
-                        if (tablePendingOrders.length === 0) return null;
+                        // Show all tables that have any orders
+                        if (table.orders.length === 0) return null;
 
                         return (
                             <div key={table.id} className={styles.kitchenCard}>
                                 <div className={styles.kitchenHeader}>
                                     <h3>{table.name}</h3>
-                                    <span className={styles.timeAgo}>Aktif</span>
+                                    <span className={styles.timeAgo}>
+                                        {table.orders.some(o => o.status === 'pending' || o.status === 'prepared')
+                                            ? 'Aktif'
+                                            : 'Tamamlandı'}
+                                    </span>
                                 </div>
                                 <div className={styles.kitchenItems}>
-                                    {tablePendingOrders.map((item) => (
-                                        <div key={item.id} className={`${styles.kitchenItem} ${styles[item.status]}`}>
-                                            <div className={styles.itemMeta}>
-                                                <span className={styles.qty}>{item.quantity}x</span>
-                                                <span className={styles.prodName}>{item.name}</span>
+                                    {table.orders.map((item) => {
+                                        const isDelivered = item.status === 'delivered';
+                                        const isOutOfStock = item.status === 'out_of_stock';
+                                        const isPassive = isDelivered || isOutOfStock;
+
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className={`${styles.kitchenItem} ${styles[item.status]} ${isPassive ? styles.passiveItem : ''}`}
+                                            >
+                                                <div className={styles.itemMeta}>
+                                                    <span className={styles.qty}>{item.quantity}x</span>
+                                                    <span className={styles.prodName}>{item.name}</span>
+                                                    <span className={styles.itemPriceSmall}>{item.price * item.quantity}₺</span>
+                                                </div>
+                                                <div className={styles.itemActions}>
+                                                    {isDelivered ? (
+                                                        <span className={styles.statusLabel + ' ' + styles.deliveredLabel}>
+                                                            ✓ Teslim Edildi
+                                                        </span>
+                                                    ) : isOutOfStock ? (
+                                                        <span className={styles.statusLabel + ' ' + styles.stockOutLabel}>
+                                                            ✗ Stokta Yok
+                                                        </span>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                className={styles.statusActionBtn}
+                                                                onClick={() => advanceItemStatus(item.id, item.status)}
+                                                            >
+                                                                {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
+                                                            </button>
+                                                            {item.status === 'pending' && (
+                                                                <button
+                                                                    className={`${styles.statusActionBtn} ${styles.stockOutBtn}`}
+                                                                    onClick={() => handleStockOut(item.id)}
+                                                                    title="Stok Yetersiz"
+                                                                >
+                                                                    <XCircle size={14} /> Stok Bitti
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <div className={styles.itemActions}>
-                                                <button className={styles.statusActionBtn} onClick={() => advanceItemStatus(item.id, item.status)}>
-                                                    {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
-                                                </button>
-                                                {item.status === 'pending' && (
-                                                    <button
-                                                        className={`${styles.statusActionBtn} ${styles.stockOutBtn}`}
-                                                        onClick={() => handleStockOut(item.id)}
-                                                        title="Stok Yetersiz"
-                                                    >
-                                                        <XCircle size={14} /> Stok Bitti
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         );
