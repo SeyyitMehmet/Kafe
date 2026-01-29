@@ -665,6 +665,7 @@ textarea:focus {
     font-weight: bold;
     color: var(--color-text-main);
 }
+
 .uploadArea {
     border: 2px dashed rgba(255, 255, 255, 0.2);
     border-radius: var(--radius-sm);
@@ -724,8 +725,8 @@ textarea:focus {
     transition: opacity 0.3s;
     font-size: 0.8rem;
     pointer-events: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tooltipContainer:hover .tooltipText {
@@ -743,18 +744,19 @@ textarea:focus {
     margin: 1rem 0;
 }
 
-.orDivider::before, .orDivider::after {
+.orDivider::before,
+.orDivider::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .removeImageBtn {
     position: absolute;
     top: 5px;
     right: 5px;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
     color: white;
     border: none;
     border-radius: 50%;
@@ -766,3 +768,33 @@ textarea:focus {
     cursor: pointer;
 }
 
+/* Item Actions Container */
+.itemActions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Stock Out Button */
+.stockOutBtn {
+    border: 1px solid #ef4444 !important;
+    color: #ef4444 !important;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stockOutBtn:hover {
+    background-color: #ef4444 !important;
+    color: white !important;
+}
+
+/* Out of Stock Item Style */
+.out_of_stock {
+    opacity: 0.6;
+}
+
+.out_of_stock .prodName {
+    text-decoration: line-through;
+    color: #ef4444;
+}

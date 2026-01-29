@@ -4,7 +4,7 @@ import { useProducts } from '../hooks/useProducts';
 import { useTables } from '../hooks/useTables';
 import ProductCard from '../components/ProductCard';
 import Cart from '../components/Cart';
-import { Clock, CheckCircle, ChefHat } from 'lucide-react';
+import { Clock, CheckCircle, ChefHat, XCircle } from 'lucide-react';
 import styles from './CustomerHome.module.css';
 
 export default function CustomerHome() {
@@ -105,6 +105,7 @@ export default function CustomerHome() {
             case 'pending': return <Clock size={16} color="orange" />;
             case 'prepared': return <ChefHat size={16} color="#00bcd4" />;
             case 'delivered': return <CheckCircle size={16} color="#4CAF50" />;
+            case 'out_of_stock': return <XCircle size={16} color="#ef4444" />;
             default: return null;
         }
     };
@@ -114,6 +115,7 @@ export default function CustomerHome() {
             case 'pending': return 'Onay Bekliyor';
             case 'prepared': return 'Hazırlanıyor';
             case 'delivered': return 'Teslim Edildi';
+            case 'out_of_stock': return 'Stok Bitti';
             default: return status;
         }
     };

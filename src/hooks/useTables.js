@@ -217,6 +217,21 @@ export function useTables(cafeId) {
         }
     };
 
+    // Mark an order item as out of stock
+    const cancelOrderItem = async (itemId, reason = 'out_of_stock') => {
+        if (!supabase || !supabase.from) return;
+        try {
+            const { error } = await supabase
+                .from('order_items')
+                .update({ status: reason })
+                .eq('id', itemId);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error cancelling item:', error);
+        }
+    };
+
     const clearTable = async (tableId) => {
         if (!supabase || !supabase.from) return;
         try {
@@ -326,5 +341,5 @@ export function useTables(cafeId) {
         }
     };
 
-    return { tables, history, loading, addOrder, updateOrderItemStatus, clearTable, addTable, deleteTable };
+    return { tables, history, loading, addOrder, updateOrderItemStatus, cancelOrderItem, clearTable, addTable, deleteTable };
 }

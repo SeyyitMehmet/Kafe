@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import { useTables } from '../hooks/useTables';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock, Upload, Image as ImageIcon, Info } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock, Upload, Image as ImageIcon, Info, XCircle } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import styles from './AdminDashboard.module.css';
 
@@ -15,7 +15,7 @@ export default function AdminDashboard() {
 
     // Initialize with selectedCafe?.id (which might be null initially)
     const { products, addProduct, updateProduct, deleteProduct } = useProducts(selectedCafe?.id);
-    const { tables, history, clearTable, updateOrderItemStatus, addTable, deleteTable } = useTables(selectedCafe?.id);
+    const { tables, history, clearTable, updateOrderItemStatus, cancelOrderItem, addTable, deleteTable } = useTables(selectedCafe?.id);
 
     const [activeTab, setActiveTab] = useState('orders');
     const [dbStatus, setDbStatus] = useState('checking');
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
 
     // Audio Notification Logic
     const pendingOrders = tables?.flatMap(t =>
-        t.orders.filter(o => o.status !== 'delivered').map(o => ({ ...o, tableId: t.id, tableName: t.name }))
+        t.orders.filter(o => o.status !== 'delivered' && o.status !== 'out_of_stock').map(o => ({ ...o, tableId: t.id, tableName: t.name }))
     ) || [];
 
     // Audio Notification Logic
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
 
     const handlePayment = (tableId) => {
         const table = tables.find(t => t.id === tableId);
-        if (table.orders.some(o => o.status !== 'delivered')) {
+        if (table.orders.some(o => o.status !== 'delivered' && o.status !== 'out_of_stock')) {
             alert('Masada teslim edilmemiş siparişler var!');
             return;
         }
@@ -210,6 +210,12 @@ export default function AdminDashboard() {
     const advanceItemStatus = (itemId, currentStatus) => {
         let nextStatus = currentStatus === 'pending' ? 'prepared' : currentStatus === 'prepared' ? 'delivered' : null;
         if (nextStatus) updateOrderItemStatus(itemId, nextStatus);
+    };
+
+    const handleStockOut = (itemId) => {
+        if (confirm('Bu ürün stokta bitti mi? Müşteriye bildirilecek.')) {
+            cancelOrderItem(itemId, 'out_of_stock');
+        }
     };
 
     if (loadingCafe) return <div className={styles.container}>Yükleniyor...</div>;
@@ -314,7 +320,7 @@ export default function AdminDashboard() {
                 <div className={styles.ordersGrid}>
                     {pendingOrders.length === 0 && <p className={styles.emptyText}>Bekleyen yeni sipariş yok.</p>}
                     {tables.length > 0 && tables.map(table => {
-                        const tablePendingOrders = table.orders.filter(o => o.status !== 'delivered');
+                        const tablePendingOrders = table.orders.filter(o => o.status !== 'delivered' && o.status !== 'out_of_stock');
                         if (tablePendingOrders.length === 0) return null;
 
                         return (
@@ -330,9 +336,20 @@ export default function AdminDashboard() {
                                                 <span className={styles.qty}>{item.quantity}x</span>
                                                 <span className={styles.prodName}>{item.name}</span>
                                             </div>
-                                            <button className={styles.statusActionBtn} onClick={() => advanceItemStatus(item.id, item.status)}>
-                                                {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
-                                            </button>
+                                            <div className={styles.itemActions}>
+                                                <button className={styles.statusActionBtn} onClick={() => advanceItemStatus(item.id, item.status)}>
+                                                    {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
+                                                </button>
+                                                {item.status === 'pending' && (
+                                                    <button
+                                                        className={`${styles.statusActionBtn} ${styles.stockOutBtn}`}
+                                                        onClick={() => handleStockOut(item.id)}
+                                                        title="Stok Yetersiz"
+                                                    >
+                                                        <XCircle size={14} /> Stok Bitti
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
