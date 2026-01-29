@@ -841,3 +841,48 @@ textarea:focus {
     margin-left: auto;
     padding-left: 0.5rem;
 }
+
+/* Product Stock Status Styles */
+.stockBadge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.stockActive {
+    background: rgba(76, 175, 80, 0.15);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.stockInactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.inactiveRow {
+    opacity: 0.6;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.inactiveRow td {
+    color: var(--color-text-muted);
+}
+
+.deactivateBtn {
+    color: #f59e0b !important;
+}
+
+.deactivateBtn:hover {
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.activateBtn {
+    color: #4CAF50 !important;
+}
+
+.activateBtn:hover {
+    background: rgba(76, 175, 80, 0.15) !important;
+}

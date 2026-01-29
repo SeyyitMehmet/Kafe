@@ -49,7 +49,28 @@ export function useProducts(cafeId) {
     };
 
     useEffect(() => {
-        fetchProducts();
+        if (cafeId) {
+            fetchProducts();
+        } else {
+            setLoading(false);
+        }
+
+        // Realtime subscription for product updates
+        if (supabase && supabase.channel && cafeId) {
+            const subscription = supabase
+                .channel('products_changes')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'products',
+                    filter: `cafe_id=eq.${cafeId}`
+                }, fetchProducts)
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(subscription);
+            };
+        }
     }, [cafeId]);
 
     const addProduct = async (product) => {
@@ -115,5 +136,27 @@ export function useProducts(cafeId) {
         }
     };
 
-    return { products, loading, addProduct, updateProduct, deleteProduct };
+    // Toggle product stock status (active/inactive)
+    const toggleProductStock = async (productId, currentStatus) => {
+        if (!supabase || !supabase.from) return;
+        try {
+            const newStatus = !currentStatus;
+            const { error } = await supabase
+                .from('products')
+                .update({ is_active: newStatus })
+                .eq('id', productId);
+
+            if (error) throw error;
+
+            // Update local state
+            setProducts(prev => prev.map(p =>
+                p.id === productId ? { ...p, is_active: newStatus } : p
+            ));
+        } catch (error) {
+            console.error('Error toggling product stock:', error);
+            alert('Ürün durumu güncellenirken hata oluştu');
+        }
+    };
+
+    return { products, loading, addProduct, updateProduct, deleteProduct, toggleProductStock };
 }

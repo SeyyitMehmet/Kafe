@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProducts } from '../hooks/useProducts';
 import { useTables } from '../hooks/useTables';
 import { supabase } from '../lib/supabase';
-import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock, Upload, Image as ImageIcon, Info, XCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Armchair, Receipt, ChefHat, Wifi, WifiOff, QrCode, Clock, Upload, Image as ImageIcon, Info, XCircle, Power, PowerOff } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import styles from './AdminDashboard.module.css';
 
@@ -14,7 +14,7 @@ export default function AdminDashboard() {
     const [daysRemaining, setDaysRemaining] = useState(null);
 
     // Initialize with selectedCafe?.id (which might be null initially)
-    const { products, addProduct, updateProduct, deleteProduct } = useProducts(selectedCafe?.id);
+    const { products, addProduct, updateProduct, deleteProduct, toggleProductStock } = useProducts(selectedCafe?.id);
     const { tables, history, clearTable, updateOrderItemStatus, cancelOrderItem, addTable, deleteTable } = useTables(selectedCafe?.id);
 
     const [activeTab, setActiveTab] = useState('orders');
@@ -453,22 +453,37 @@ export default function AdminDashboard() {
                     <div className={styles.tableContainer}>
                         <table className={styles.table}>
                             <thead>
-                                <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>İşlemler</th></tr>
+                                <tr><th>Ürün</th><th>Kategori</th><th>Fiyat</th><th>Durum</th><th>İşlemler</th></tr>
                             </thead>
                             <tbody>
-                                {products.length > 0 ? products.map(product => (
-                                    <tr key={product.id}>
-                                        <td>{product.name}</td>
-                                        <td><span className={styles.badge}>{product.category}</span></td>
-                                        <td>{product.price} ₺</td>
-                                        <td>
-                                            <div className={styles.actions}>
-                                                <button className={styles.iconBtn} onClick={() => handleEdit(product)}><Pencil size={18} /></button>
-                                                <button className={`${styles.iconBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(product.id)}><Trash2 size={18} /></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : <tr><td colSpan="4" className={styles.emptyText}>Ürün bulunamadı.</td></tr>}
+                                {products.length > 0 ? products.map(product => {
+                                    const isActive = product.is_active !== false; // Default to active if undefined
+                                    return (
+                                        <tr key={product.id} className={!isActive ? styles.inactiveRow : ''}>
+                                            <td>{product.name}</td>
+                                            <td><span className={styles.badge}>{product.category}</span></td>
+                                            <td>{product.price} ₺</td>
+                                            <td>
+                                                <span className={`${styles.stockBadge} ${isActive ? styles.stockActive : styles.stockInactive}`}>
+                                                    {isActive ? 'Aktif' : 'Pasif'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div className={styles.actions}>
+                                                    <button
+                                                        className={`${styles.iconBtn} ${isActive ? styles.deactivateBtn : styles.activateBtn}`}
+                                                        onClick={() => toggleProductStock(product.id, isActive)}
+                                                        title={isActive ? 'Pasifleştir (Stokta Yok)' : 'Aktifleştir'}
+                                                    >
+                                                        {isActive ? <PowerOff size={18} /> : <Power size={18} />}
+                                                    </button>
+                                                    <button className={styles.iconBtn} onClick={() => handleEdit(product)}><Pencil size={18} /></button>
+                                                    <button className={`${styles.iconBtn} ${styles.deleteBtn}`} onClick={() => handleDelete(product.id)}><Trash2 size={18} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                }) : <tr><td colSpan="5" className={styles.emptyText}>Ürün bulunamadı.</td></tr>}
                             </tbody>
                         </table>
                     </div>
