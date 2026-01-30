@@ -1,42 +1,198 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* Utility Page Layouts */
+.utility-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 2rem;
   text-align: center;
+  background:
+    radial-gradient(ellipse at top, rgba(249, 115, 22, 0.1) 0%, transparent 50%);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.utility-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 3rem;
+  border-radius: var(--radius-xl);
+  max-width: 450px;
+  width: 100%;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-xl);
+  animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes logo-spin {
+@keyframes scaleIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
   }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.utility-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-glow);
+}
+
+.utility-icon svg {
+  width: 40px;
+  height: 40px;
+  color: white;
+}
+
+.utility-icon.warning {
+  background: linear-gradient(135deg, var(--color-warning) 0%, #f59e0b 100%);
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+}
+
+.utility-icon.error {
+  background: linear-gradient(135deg, var(--color-accent) 0%, #dc2626 100%);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.utility-icon.info {
+  background: linear-gradient(135deg, var(--color-info) 0%, #2563eb 100%);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.utility-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  margin-bottom: 0.75rem;
+}
+
+.utility-description {
+  color: var(--color-text-muted);
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.utility-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: var(--gradient-primary);
+  color: white;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+.utility-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+  color: white;
+}
+
+.utility-btn.secondary {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--color-text-muted);
+}
+
+.utility-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-main);
+  box-shadow: none;
+}
+
+/* Toast Notifications */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-main);
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--glass-border);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.toast.success {
+  border-left: 4px solid var(--color-success);
+}
+
+.toast.error {
+  border-left: 4px solid var(--color-accent);
+}
+
+.toast.warning {
+  border-left: 4px solid var(--color-warning);
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--glass-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Page Transition */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.card {
-  padding: 2em;
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease;
 }
 
-.read-the-docs {
-  color: #888;
+.page-exit {
+  opacity: 1;
+}
+
+.page-exit-active {
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }

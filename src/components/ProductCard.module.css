@@ -1,31 +1,54 @@
 .card {
-    background-color: var(--color-bg-card);
-    border-radius: var(--radius-md);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all var(--transition-normal);
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-card);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-card), var(--shadow-glow);
-    border-color: var(--color-primary-dark);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    border-color: rgba(249, 115, 22, 0.3);
 }
 
 .imageContainer {
-    height: 200px;
+    height: 180px;
     width: 100%;
     position: relative;
     overflow: hidden;
+}
+
+.imageContainer::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 100%);
+    pointer-events: none;
 }
 
 .image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s;
+    transition: transform var(--transition-slow);
 }
 
 .card:hover .image {
@@ -34,60 +57,68 @@
 
 .priceTag {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(4px);
-    color: var(--color-primary);
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
+    top: 12px;
+    right: 12px;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
     font-weight: 700;
-    border: 1px solid var(--color-primary);
+    font-size: 0.95rem;
+    z-index: 2;
+    box-shadow: var(--shadow-md);
 }
 
 .content {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
     flex: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
+    z-index: 2;
 }
 
 .title {
     font-size: 1.1rem;
+    font-weight: 600;
     margin-bottom: 0.5rem;
     color: var(--color-text-main);
+    line-height: 1.3;
 }
 
 .description {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     color: var(--color-text-muted);
     margin-bottom: var(--spacing-sm);
     flex-grow: 1;
-    /* Pushes the button down */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.5;
 }
 
 .addButton {
     margin-top: auto;
     width: 100%;
-    background-color: var(--color-primary);
-    color: #000;
+    background: var(--gradient-primary);
+    color: white;
     font-weight: 600;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    /* button base styles already in index.css */
+    transition: all var(--transition-normal);
+    border: none;
+    font-size: 0.95rem;
 }
 
 .addButton:hover {
-    background-color: #ffd700;
-    /* Brighter gold */
     transform: scale(1.02);
+    box-shadow: var(--shadow-glow);
 }
 
 .addButton:active {
@@ -96,13 +127,14 @@
 
 /* Inactive Product Styles */
 .inactiveCard {
-    opacity: 0.7;
-    filter: grayscale(30%);
+    opacity: 0.6;
+    filter: grayscale(40%);
 }
 
 .inactiveCard:hover {
     transform: none;
     box-shadow: none;
+    border-color: var(--glass-border);
 }
 
 .outOfStockOverlay {
@@ -111,30 +143,34 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1;
+    z-index: 10;
 }
 
 .outOfStockOverlay span {
-    background: #ef4444;
+    background: var(--color-accent);
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
     font-weight: 700;
     font-size: 0.9rem;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: var(--shadow-md);
 }
 
 .disabledButton {
-    background-color: #666 !important;
-    color: #aaa !important;
+    background: var(--color-bg-elevated) !important;
+    color: var(--color-text-muted) !important;
     cursor: not-allowed !important;
+    box-shadow: none !important;
 }
 
 .disabledButton:hover {
     transform: none !important;
-    background-color: #666 !important;
+    box-shadow: none !important;
 }
