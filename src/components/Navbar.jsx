@@ -8,7 +8,7 @@ export default function Navbar() {
             <div className={styles.container}>
                 <Link to="/" className={styles.logo}>
                     <img src="/logo.png" alt="Logo" className={styles.logoImage} />
-                    <span>Kafe İçi</span>
+                    <span>SiparişGo</span>
                 </Link>
                 {/* Admin link hidden for customers */}
             </div>
