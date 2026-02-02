@@ -5,9 +5,14 @@ import styles from './Cart.module.css';
 export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Calculate totals internaly to ensure sync with items prop
-    const total = items.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
-    const totalQty = items.reduce((sum, item) => sum + Number(item.quantity), 0);
+    // Calculate totals - simplified and safe
+    const total = items.reduce((sum, item) => {
+        const p = parseFloat(item.price) || 0;
+        const q = parseInt(item.quantity) || 0;
+        return sum + (p * q);
+    }, 0);
+
+    const totalQty = items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
 
     // Helper to handle quantity updates if onUpdateItem is provided
     const updateQuantity = (itemId, delta) => {
@@ -15,12 +20,11 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
         const item = items.find(i => i.id === itemId);
         if (!item) return;
 
-        const newQty = item.quantity + delta;
+        const currentQty = parseInt(item.quantity) || 0;
+        const newQty = currentQty + delta;
+
         if (newQty > 0) {
             onUpdateItem(itemId, { quantity: newQty });
-        } else {
-            // newQty 0 means remove? Or just stop at 1? Usually remove or stop.
-            // Let's stop at 1 and let Trash button handle removal to avoid accidents.
         }
     };
 
@@ -57,7 +61,7 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
 
             <div className={styles.items}>
                 {items.map((item) => (
-                    <div key={`${item.id} -${item.quantity} `} className={styles.item}>
+                    <div key={`${item.id}-${item.quantity}`} className={styles.item}>
                         <div className={styles.itemInfo}>
                             <span className={styles.itemName}>{item.name}</span>
                             <div className={styles.qtyControls}>
