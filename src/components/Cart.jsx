@@ -5,15 +5,6 @@ import styles from './Cart.module.css';
 export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Calculate totals - simplified and safe
-    const total = items.reduce((sum, item) => {
-        const p = parseFloat(item.price) || 0;
-        const q = parseInt(item.quantity) || 0;
-        return sum + (p * q);
-    }, 0);
-
-    const totalQty = items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
-
     // Helper to handle quantity updates if onUpdateItem is provided
     const updateQuantity = (itemId, delta) => {
         if (!onUpdateItem) return;
@@ -28,6 +19,9 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
         }
     };
 
+    const calculateTotal = () => items.reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)), 0);
+    const calculateQty = () => items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0);
+
     if (items.length === 0) {
         return null;
     }
@@ -37,10 +31,10 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
             <div className={styles.minimizedCart} onClick={() => setIsOpen(true)}>
                 <div className={styles.minimizedLeft}>
                     <ShoppingBag size={20} className={styles.bounceIcon} />
-                    <span>Sepet ({totalQty})</span>
+                    <span>Sepet ({calculateQty()})</span>
                 </div>
                 <div className={styles.minimizedRight}>
-                    <span className={styles.minimizedTotal}>{total} ₺</span>
+                    <span className={styles.minimizedTotal}>{calculateTotal()} ₺</span>
                     <ChevronUp size={20} />
                 </div>
             </div>
@@ -77,7 +71,7 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
                                 >+</button>
                             </div>
                         </div>
-                        <div className={styles.itemPrice}>{Number(item.price) * Number(item.quantity)} ₺</div>
+                        <div className={styles.itemPrice}>{(parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)} ₺</div>
                         <button onClick={() => onRemove(item.id)} className={styles.removeBtn}>
                             <Trash2 size={16} />
                         </button>
@@ -88,7 +82,7 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
             <div className={styles.footer}>
                 <div className={styles.total}>
                     <span>Toplam:</span>
-                    <span>{total} ₺</span>
+                    <span>{calculateTotal()} ₺</span>
                 </div>
                 <button onClick={() => onComplete()} className={styles.checkoutBtn}>
                     Siparişi Ver
