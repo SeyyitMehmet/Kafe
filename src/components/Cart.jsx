@@ -54,7 +54,7 @@ export default function Cart({ items, total, totalQty, onRemove, onComplete, onU
 
             <div className={styles.items}>
                 {items.map((item) => (
-                    <div key={item.id} className={styles.item}>
+                    <div key={`${item.id}-${item.quantity}`} className={styles.item}>
                         <div className={styles.itemInfo}>
                             <span className={styles.itemName}>{item.name}</span>
                             <div className={styles.qtyControls}>
@@ -70,7 +70,7 @@ export default function Cart({ items, total, totalQty, onRemove, onComplete, onU
                                 >+</button>
                             </div>
                         </div>
-                        <div className={styles.itemPrice}>{item.price * item.quantity} ₺</div>
+                        <div className={styles.itemPrice}>{Number(item.price) * Number(item.quantity)} ₺</div>
                         <button onClick={() => onRemove(item.id)} className={styles.removeBtn}>
                             <Trash2 size={16} />
                         </button>

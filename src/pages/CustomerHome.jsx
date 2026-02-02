@@ -84,7 +84,7 @@ export default function CustomerHome() {
                         : item
                 );
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, { ...product, price: Number(product.price), quantity: 1 }];
         });
     };
 
