@@ -347,6 +347,11 @@ export default function AdminDashboard() {
                                                 key={item.id}
                                                 className={`${styles.kitchenItem} ${styles[item.status]} ${isPassive ? styles.passiveItem : ''}`}
                                             >
+                                                {item.note && (
+                                                    <div className={styles.itemNote}>
+                                                        <Info size={14} /> <span>{item.note}</span>
+                                                    </div>
+                                                )}
                                                 <div className={styles.itemMeta}>
                                                     <span className={styles.qty}>{item.quantity}x</span>
                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -358,10 +363,6 @@ export default function AdminDashboard() {
                                                     {isDelivered ? (
                                                         <span className={styles.statusLabel + ' ' + styles.deliveredLabel}>
                                                             ✓ Teslim Edildi
-                                                        </span>
-                                                    ) : isOutOfStock ? (
-                                                        <span className={styles.statusLabel + ' ' + styles.stockOutLabel}>
-                                                            ✗ Stokta Yok
                                                         </span>
                                                     ) : (
                                                         <>
@@ -422,7 +423,7 @@ export default function AdminDashboard() {
                                     {table.orders.length > 0 ? (
                                         <div className={styles.orderList}>
                                             <div className={styles.orderScroll}>
-                                                {table.orders.map((item, idx) => (
+                                                {table.orders.filter(item => item.status !== 'out_of_stock').map((item, idx) => (
                                                     <div key={idx} className={styles.orderItem}>
                                                         <span>{item.quantity}x {item.name}</span>
                                                         <span>{item.price * item.quantity} ₺</span>

@@ -112,8 +112,13 @@ export function useTables(cafeId) {
                         };
                     }
 
-                    const items = order.order_items.map(item => ({ ...item, original_price: item.price }));
-                    groups[groupKey].items.push(...items);
+                    const items = order.order_items
+                        .filter(item => item.status !== 'out_of_stock')
+                        .map(item => ({ ...item, original_price: item.price }));
+
+                    if (items.length > 0) {
+                        groups[groupKey].items.push(...items);
+                    }
                 });
 
                 // Calculate Totals and Format
@@ -171,6 +176,7 @@ export function useTables(cafeId) {
     const addOrder = async (tableId, items) => {
         if (!supabase || !supabase.from) return;
         try {
+            // 1. Insert Order Wrapper
             const { data: orderData, error: orderError } = await supabase
                 .from('orders')
                 .insert([{ table_id: tableId, cafe_id: cafeId, status: 'pending' }])
@@ -179,25 +185,67 @@ export function useTables(cafeId) {
 
             if (orderError) throw orderError;
 
+            // 2. Prepare Order Items
             const orderItems = items.map(item => ({
                 order_id: orderData.id,
                 product_id: item.id,
                 name: item.name,
                 price: item.price,
                 quantity: item.quantity,
-                status: 'pending'
+                status: 'pending',
+                note: item.note || '' // <--- Save per-item note
             }));
 
+            // 3. Insert Items
             const { error: itemsError } = await supabase
                 .from('order_items')
                 .insert(orderItems);
 
             if (itemsError) throw itemsError;
 
+            // 4. Update Table Status
             await supabase
                 .from('tables')
                 .update({ status: 'occupied' })
                 .eq('id', tableId);
+
+            // 5. BRUTE FORCE LOCAL UPDATE (OPTIMISTIC UI)
+            // Immediately update the local state without waiting for a re-fetch
+            setTables(prevTables => {
+                return prevTables.map(t => {
+                    if (t.id === tableId) {
+                        // Create the new items in the format the UI expects
+                        const newUiItems = orderItems.map(item => ({
+                            ...item,
+                            // Map the DB structure to UI structure if needed (mostly same)
+                            status: 'pending',
+                            orderId: orderData.id,
+                            timestamp: new Date().toISOString(),
+                            note: item.note, // <--- Use per-item note
+                            price: Number(item.price), // Force Number
+                            quantity: Number(item.quantity) // Force Number
+                        }));
+
+                        const updatedOrders = [...(t.orders || []), ...newUiItems];
+
+                        // Recalculate Total
+                        const newTotal = updatedOrders
+                            .filter(item => item.status !== 'out_of_stock')
+                            .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+                        return {
+                            ...t,
+                            status: 'occupied',
+                            orders: updatedOrders,
+                            total: newTotal
+                        };
+                    }
+                    return t;
+                });
+            });
+
+            // 6. Background synchronization (just in case)
+            fetchData();
 
         } catch (error) {
             console.error('Error adding order:', error);

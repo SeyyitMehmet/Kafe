@@ -139,16 +139,20 @@ export default function CustomerHome() {
 
             {/* Order History / Status Section */}
             {currentTable?.orders.length > 0 && (() => {
-                // Calculate total excluding out_of_stock items
+                // Calculate total dynamically from the visible list to ensure consistency
                 const activeTotal = currentTable.orders
                     .filter(item => item.status !== 'out_of_stock')
-                    .reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)), 0);
+                    .reduce((sum, item) => {
+                        const price = parseFloat(item.price) || 0;
+                        const quantity = parseInt(item.quantity) || 0;
+                        return sum + (price * quantity);
+                    }, 0);
 
                 return (
                     <div className={styles.orderStatusContainer}>
                         <div className={styles.statusHeaderRow}>
                             <h3>Sipariş Durumu</h3>
-                            <span className={styles.totalBadge}>Toplam: {activeTotal} ₺</span>
+                            <span key={activeTotal} className={styles.totalBadge}>Toplam: {activeTotal} ₺</span>
                         </div>
                         <div className={styles.statusList}>
                             {currentTable.orders.slice().reverse().map((item) => (
@@ -163,6 +167,17 @@ export default function CustomerHome() {
                                                 }
                                             </span>
                                         </div>
+                                        {item.note && (
+                                            <div style={{
+                                                fontSize: '0.8rem',
+                                                color: '#fbbf24',
+                                                paddingTop: '0.25rem',
+                                                fontStyle: 'italic',
+                                                maxWidth: '200px'
+                                            }}>
+                                                Not: {item.note}
+                                            </div>
+                                        )}
                                         <span className={`${styles.statusBadge} ${styles[item.status]}`}>
                                             {getStatusIcon(item.status)} {getStatusText(item.status)}
                                         </span>

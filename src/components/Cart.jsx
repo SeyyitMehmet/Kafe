@@ -4,6 +4,7 @@ import styles from './Cart.module.css';
 
 export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [note, setNote] = useState('');
 
     // Helper to handle quantity updates if onUpdateItem is provided
     const updateQuantity = (itemId, delta) => {
@@ -27,14 +28,17 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     }
 
     if (!isOpen) {
+        const totalAmount = calculateTotal();
+        const totalQty = calculateQty();
+
         return (
             <div className={styles.minimizedCart} onClick={() => setIsOpen(true)}>
                 <div className={styles.minimizedLeft}>
                     <ShoppingBag size={20} className={styles.bounceIcon} />
-                    <span>Sepet ({calculateQty()})</span>
+                    <span>Sepet ({totalQty})</span>
                 </div>
                 <div className={styles.minimizedRight}>
-                    <span className={styles.minimizedTotal}>{calculateTotal()} ₺</span>
+                    <span key={totalAmount} className={styles.minimizedTotal}>{totalAmount} ₺</span>
                     <ChevronUp size={20} />
                 </div>
             </div>
@@ -56,25 +60,36 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
             <div className={styles.items}>
                 {items.map((item) => (
                     <div key={`${item.id}-${item.quantity}`} className={styles.item}>
-                        <div className={styles.itemInfo}>
-                            <span className={styles.itemName}>{item.name}</span>
-                            <div className={styles.qtyControls}>
-                                <button
-                                    className={styles.qtyBtn}
-                                    onClick={() => updateQuantity(item.id, -1)}
-                                    disabled={item.quantity <= 1}
-                                >-</button>
-                                <span className={styles.itemQty}>{item.quantity}</span>
-                                <button
-                                    className={styles.qtyBtn}
-                                    onClick={() => updateQuantity(item.id, 1)}
-                                >+</button>
+                        <div className={styles.itemMainRow}>
+                            <div className={styles.itemInfo}>
+                                <span className={styles.itemName}>{item.name}</span>
+                                <div className={styles.qtyControls}>
+                                    <button
+                                        className={styles.qtyBtn}
+                                        onClick={() => updateQuantity(item.id, -1)}
+                                        disabled={item.quantity <= 1}
+                                    >-</button>
+                                    <span className={styles.itemQty}>{item.quantity}</span>
+                                    <button
+                                        className={styles.qtyBtn}
+                                        onClick={() => updateQuantity(item.id, 1)}
+                                    >+</button>
+                                </div>
                             </div>
+                            <div className={styles.itemPrice}>{(parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)} ₺</div>
+                            <button onClick={() => onRemove(item.id)} className={styles.removeBtn}>
+                                <Trash2 size={16} />
+                            </button>
                         </div>
-                        <div className={styles.itemPrice}>{(parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)} ₺</div>
-                        <button onClick={() => onRemove(item.id)} className={styles.removeBtn}>
-                            <Trash2 size={16} />
-                        </button>
+                        <div className={styles.itemNoteRow}>
+                            <input
+                                type="text"
+                                className={styles.itemNoteInput}
+                                placeholder="Not ekle (örn. acısız)..."
+                                value={item.note || ''}
+                                onChange={(e) => onUpdateItem(item.id, { note: e.target.value })}
+                            />
+                        </div>
                     </div>
                 ))}
             </div>
@@ -84,7 +99,10 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
                     <span>Toplam:</span>
                     <span key={calculateTotal()}>{calculateTotal()} ₺</span>
                 </div>
-                <button onClick={() => onComplete()} className={styles.checkoutBtn}>
+                <button
+                    onClick={() => onComplete()}
+                    className={styles.checkoutBtn}
+                >
                     Siparişi Ver
                 </button>
             </div>
