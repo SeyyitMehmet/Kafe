@@ -100,9 +100,12 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-sm);
     color: var(--color-text-muted);
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
     transition: all 0.2s;
+    font-family: inherit;
+    resize: none;
+    min-height: 34px;
 }
 
 .itemNoteInput:focus {

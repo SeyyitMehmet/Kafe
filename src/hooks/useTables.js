@@ -196,6 +196,8 @@ export function useTables(cafeId) {
                 note: item.note || '' // <--- Save per-item note
             }));
 
+            console.log('DEBUG ORDER INSERT:', orderItems);
+
             // 3. Insert Items
             const { error: itemsError } = await supabase
                 .from('order_items')

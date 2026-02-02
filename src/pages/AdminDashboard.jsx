@@ -347,43 +347,45 @@ export default function AdminDashboard() {
                                                 key={item.id}
                                                 className={`${styles.kitchenItem} ${styles[item.status]} ${isPassive ? styles.passiveItem : ''}`}
                                             >
+                                                <div className={styles.kitchenItemMain}>
+                                                    <div className={styles.itemMeta}>
+                                                        <span className={styles.qty}>{item.quantity}x</span>
+                                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <span className={styles.prodName}>{item.name}</span>
+                                                        </div>
+                                                        <span className={styles.itemPriceSmall}>{item.price * item.quantity}₺</span>
+                                                    </div>
+                                                    <div className={styles.itemActions}>
+                                                        {isDelivered ? (
+                                                            <span className={styles.statusLabel + ' ' + styles.deliveredLabel}>
+                                                                ✓ Teslim Edildi
+                                                            </span>
+                                                        ) : (
+                                                            <>
+                                                                <button
+                                                                    className={styles.statusActionBtn}
+                                                                    onClick={() => advanceItemStatus(item.id, item.status)}
+                                                                >
+                                                                    {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
+                                                                </button>
+                                                                {item.status === 'pending' && (
+                                                                    <button
+                                                                        className={`${styles.statusActionBtn} ${styles.stockOutBtn}`}
+                                                                        onClick={() => handleStockOut(item.id)}
+                                                                        title="Stok Yetersiz"
+                                                                    >
+                                                                        <XCircle size={14} /> Stok Bitti
+                                                                    </button>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
                                                 {item.note && (
                                                     <div className={styles.itemNote}>
-                                                        <Info size={14} /> <span>{item.note}</span>
+                                                        <Info size={14} /> <div>{item.note}</div>
                                                     </div>
                                                 )}
-                                                <div className={styles.itemMeta}>
-                                                    <span className={styles.qty}>{item.quantity}x</span>
-                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <span className={styles.prodName}>{item.name}</span>
-                                                    </div>
-                                                    <span className={styles.itemPriceSmall}>{item.price * item.quantity}₺</span>
-                                                </div>
-                                                <div className={styles.itemActions}>
-                                                    {isDelivered ? (
-                                                        <span className={styles.statusLabel + ' ' + styles.deliveredLabel}>
-                                                            ✓ Teslim Edildi
-                                                        </span>
-                                                    ) : (
-                                                        <>
-                                                            <button
-                                                                className={styles.statusActionBtn}
-                                                                onClick={() => advanceItemStatus(item.id, item.status)}
-                                                            >
-                                                                {item.status === 'pending' ? 'Hazırla' : 'Teslim Et'}
-                                                            </button>
-                                                            {item.status === 'pending' && (
-                                                                <button
-                                                                    className={`${styles.statusActionBtn} ${styles.stockOutBtn}`}
-                                                                    onClick={() => handleStockOut(item.id)}
-                                                                    title="Stok Yetersiz"
-                                                                >
-                                                                    <XCircle size={14} /> Stok Bitti
-                                                                </button>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
                                             </div>
                                         );
                                     })}

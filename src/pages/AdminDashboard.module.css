@@ -271,24 +271,46 @@
 .itemNote {
     background: rgba(234, 179, 8, 0.2);
     color: #fde047;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem;
     border-radius: 4px;
-    font-size: 0.8rem;
-    display: flex;
-    align-items: center;
+    font-size: 0.85rem;
+    display: grid;
+    grid-template-columns: 16px 1fr;
     gap: 0.5rem;
-    margin-bottom: 0.25rem;
+    align-items: start;
+    /* margin-bottom is not needed for last child, but margin-top for separation from main content */
+    margin-top: 0.5rem;
     font-style: italic;
+    white-space: pre-wrap;
+    word-break: break-word;
+    /* Ensure long words don't overflow */
+    overflow-wrap: break-word;
+    /* Standard property */
+    width: 100%;
+    line-height: 1.4;
+}
+
+.itemNote svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+    /* Visual alignment with line height */
 }
 
 .kitchenItem {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    /* Stack Note under content */
     padding: 0.75rem;
     background: rgba(0, 0, 0, 0.2);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
+}
+
+.kitchenItemMain {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .kitchenItem:hover {

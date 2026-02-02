@@ -82,12 +82,12 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
                             </button>
                         </div>
                         <div className={styles.itemNoteRow}>
-                            <input
-                                type="text"
+                            <textarea
                                 className={styles.itemNoteInput}
                                 placeholder="Not ekle (örn. acısız)..."
                                 value={item.note || ''}
                                 onChange={(e) => onUpdateItem(item.id, { note: e.target.value })}
+                                rows={1}
                             />
                         </div>
                     </div>
