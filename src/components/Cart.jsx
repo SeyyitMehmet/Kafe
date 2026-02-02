@@ -2,13 +2,9 @@ import { useState } from 'react';
 import { Trash2, ShoppingBag, ChevronUp, X } from 'lucide-react';
 import styles from './Cart.module.css';
 
-export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
+export default function Cart({ items, total, totalQty, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
     const [note, setNote] = useState('');
-
-    // Calculate totals directly from items prop to ensure they are always in sync
-    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
 
     // Helper to handle quantity updates if onUpdateItem is provided
     const updateQuantity = (itemId, delta) => {
@@ -57,8 +53,8 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
             </div>
 
             <div className={styles.items}>
-                {items.map((item, index) => (
-                    <div key={`${item.id}-${index}`} className={styles.item}>
+                {items.map((item) => (
+                    <div key={item.id} className={styles.item}>
                         <div className={styles.itemInfo}>
                             <span className={styles.itemName}>{item.name}</span>
                             <div className={styles.qtyControls}>

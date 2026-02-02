@@ -198,6 +198,8 @@ export default function CustomerHome() {
 
             <Cart
                 items={cart}
+                total={cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)}
+                totalQty={cart.reduce((sum, item) => sum + item.quantity, 0)}
                 onRemove={handleRemoveFromCart}
                 onComplete={handlePlaceOrder}
                 onUpdateItem={handleUpdateCartItem}
