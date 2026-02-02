@@ -92,9 +92,9 @@ export default function CustomerHome() {
         setCart(prev => prev.filter(item => item.id !== productId));
     };
 
-    const handlePlaceOrder = () => {
+    const handlePlaceOrder = (note) => {
         if (confirm('Siparişi onaylıyor musunuz?')) {
-            addOrder(currentTable.id, cart); // Changed tableId (token) to currentTable.id (numeric ID)
+            addOrder(currentTable.id, cart, note);
             setCart([]);
             alert('Siparişiniz alındı! Onay bekleniyor.');
         }
@@ -122,6 +122,12 @@ export default function CustomerHome() {
 
     if (productsLoading || tablesLoading) return <div>Yükleniyor...</div>;
     if (!tableId) return null; // Wait for navigation
+
+    const handleUpdateCartItem = (itemId, updates) => {
+        setCart(prev => prev.map(item =>
+            item.id === itemId ? { ...item, ...updates } : item
+        ));
+    };
 
     return (
         <div className={styles.container}>
@@ -194,6 +200,7 @@ export default function CustomerHome() {
                 items={cart}
                 onRemove={handleRemoveFromCart}
                 onComplete={handlePlaceOrder}
+                onUpdateItem={handleUpdateCartItem}
             />
         </div>
     );

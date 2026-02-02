@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Trash2, ShoppingBag, ChevronUp, X } from 'lucide-react';
 import styles from './Cart.module.css';
 
-export default function Cart({ items, onRemove, onComplete }) {
+export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
+    const [note, setNote] = useState('');
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -54,11 +55,29 @@ export default function Cart({ items, onRemove, onComplete }) {
             </div>
 
             <div className={styles.footer}>
+                <div style={{ marginBottom: '1rem' }}>
+                    <textarea
+                        placeholder="Sipariş Notu (Örn: Çaylar açık olsun, acı sos olmasın...)"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        style={{
+                            width: '100%',
+                            padding: '10px',
+                            borderRadius: '8px',
+                            border: '1px solid #374151',
+                            background: '#1f2937',
+                            color: 'white',
+                            fontSize: '0.9rem',
+                            minHeight: '60px',
+                            resize: 'none'
+                        }}
+                    />
+                </div>
                 <div className={styles.total}>
                     <span>Toplam:</span>
                     <span>{total} ₺</span>
                 </div>
-                <button onClick={onComplete} className={styles.checkoutBtn}>
+                <button onClick={() => onComplete(note)} className={styles.checkoutBtn}>
                     Siparişi Ver
                 </button>
             </div>

@@ -335,6 +335,11 @@ export default function AdminDashboard() {
                                             : 'Tamamlandı'}
                                     </span>
                                 </div>
+                                {table.orders[0]?.note && (
+                                    <div style={{ padding: '0 1rem 0.5rem 1rem', fontSize: '0.85rem', color: '#fbbf24', fontStyle: 'italic', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        Not: {table.orders[0].note}
+                                    </div>
+                                )}
                                 <div className={styles.kitchenItems}>
                                     {table.orders.map((item) => {
                                         const isDelivered = item.status === 'delivered';
@@ -348,7 +353,9 @@ export default function AdminDashboard() {
                                             >
                                                 <div className={styles.itemMeta}>
                                                     <span className={styles.qty}>{item.quantity}x</span>
-                                                    <span className={styles.prodName}>{item.name}</span>
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                        <span className={styles.prodName}>{item.name}</span>
+                                                    </div>
                                                     <span className={styles.itemPriceSmall}>{item.price * item.quantity}₺</span>
                                                 </div>
                                                 <div className={styles.itemActions}>
