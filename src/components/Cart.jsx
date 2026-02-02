@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Trash2, ShoppingBag, ChevronUp, X } from 'lucide-react';
 import styles from './Cart.module.css';
 
-export default function Cart({ items, total, totalQty, onRemove, onComplete, onUpdateItem }) {
+export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
-    const [note, setNote] = useState('');
+
+    // Calculate totals internaly to ensure sync with items prop
+    const total = items.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+    const totalQty = items.reduce((sum, item) => sum + Number(item.quantity), 0);
 
     // Helper to handle quantity updates if onUpdateItem is provided
     const updateQuantity = (itemId, delta) => {
@@ -54,7 +57,7 @@ export default function Cart({ items, total, totalQty, onRemove, onComplete, onU
 
             <div className={styles.items}>
                 {items.map((item) => (
-                    <div key={`${item.id}-${item.quantity}`} className={styles.item}>
+                    <div key={`${item.id} -${item.quantity} `} className={styles.item}>
                         <div className={styles.itemInfo}>
                             <span className={styles.itemName}>{item.name}</span>
                             <div className={styles.qtyControls}>
@@ -79,29 +82,11 @@ export default function Cart({ items, total, totalQty, onRemove, onComplete, onU
             </div>
 
             <div className={styles.footer}>
-                <div style={{ marginBottom: '1rem' }}>
-                    <textarea
-                        placeholder="Sipariş Notu (Örn: Çaylar açık olsun, acı sos olmasın...)"
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            borderRadius: '8px',
-                            border: '1px solid #374151',
-                            background: '#1f2937',
-                            color: 'white',
-                            fontSize: '0.9rem',
-                            minHeight: '60px',
-                            resize: 'none'
-                        }}
-                    />
-                </div>
                 <div className={styles.total}>
                     <span>Toplam:</span>
                     <span>{total} ₺</span>
                 </div>
-                <button onClick={() => onComplete(note)} className={styles.checkoutBtn}>
+                <button onClick={() => onComplete()} className={styles.checkoutBtn}>
                     Siparişi Ver
                 </button>
             </div>

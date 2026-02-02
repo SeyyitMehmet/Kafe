@@ -63,8 +63,7 @@ export function useTables(cafeId) {
                             ...item,
                             status: item.status || 'pending', // Use item status specifically
                             orderId: order.id,
-                            timestamp: order.created_at,
-                            note: order.note // Attach general order note to items for easy access
+                            timestamp: order.created_at
                         }))
                     );
 
@@ -169,12 +168,12 @@ export function useTables(cafeId) {
         }
     }, [cafeId]);
 
-    const addOrder = async (tableId, items, note = null) => {
+    const addOrder = async (tableId, items) => {
         if (!supabase || !supabase.from) return;
         try {
             const { data: orderData, error: orderError } = await supabase
                 .from('orders')
-                .insert([{ table_id: tableId, cafe_id: cafeId, status: 'pending', note: note }])
+                .insert([{ table_id: tableId, cafe_id: cafeId, status: 'pending' }])
                 .select()
                 .single();
 

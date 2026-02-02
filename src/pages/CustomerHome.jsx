@@ -92,9 +92,9 @@ export default function CustomerHome() {
         setCart(prev => prev.filter(item => item.id !== productId));
     };
 
-    const handlePlaceOrder = (note) => {
+    const handlePlaceOrder = () => {
         if (confirm('Siparişi onaylıyor musunuz?')) {
-            addOrder(currentTable.id, cart, note);
+            addOrder(currentTable.id, cart);
             setCart([]);
             alert('Siparişiniz alındı! Onay bekleniyor.');
         }
@@ -198,8 +198,6 @@ export default function CustomerHome() {
 
             <Cart
                 items={cart}
-                total={cart.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0)}
-                totalQty={cart.reduce((sum, item) => sum + Number(item.quantity), 0)}
                 onRemove={handleRemoveFromCart}
                 onComplete={handlePlaceOrder}
                 onUpdateItem={handleUpdateCartItem}
