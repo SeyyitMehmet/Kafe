@@ -142,7 +142,7 @@ export default function CustomerHome() {
                 // Calculate total excluding out_of_stock items
                 const activeTotal = currentTable.orders
                     .filter(item => item.status !== 'out_of_stock')
-                    .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+                    .reduce((sum, item) => sum + ((parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0)), 0);
 
                 return (
                     <div className={styles.orderStatusContainer}>

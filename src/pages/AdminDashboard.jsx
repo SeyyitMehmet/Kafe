@@ -336,10 +336,11 @@ export default function AdminDashboard() {
                                     </span>
                                 </div>
                                 <div className={styles.kitchenItems}>
-                                    {table.orders.map((item) => {
+                                    {table.orders.filter(item => item.status !== 'out_of_stock').map((item) => {
                                         const isDelivered = item.status === 'delivered';
-                                        const isOutOfStock = item.status === 'out_of_stock';
-                                        const isPassive = isDelivered || isOutOfStock;
+
+                                        // Since we filter out 'out_of_stock', isPassive is just isDelivered
+                                        const isPassive = isDelivered;
 
                                         return (
                                             <div
