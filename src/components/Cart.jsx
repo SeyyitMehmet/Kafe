@@ -82,7 +82,7 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
             <div className={styles.footer}>
                 <div className={styles.total}>
                     <span>Toplam:</span>
-                    <span>{calculateTotal()} ₺</span>
+                    <span key={calculateTotal()}>{calculateTotal()} ₺</span>
                 </div>
                 <button onClick={() => onComplete()} className={styles.checkoutBtn}>
                     Siparişi Ver
