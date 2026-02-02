@@ -5,8 +5,25 @@ import styles from './Cart.module.css';
 export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
     const [isOpen, setIsOpen] = useState(false);
     const [note, setNote] = useState('');
+
+    // Calculate totals directly from items prop to ensure they are always in sync
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
+
+    // Helper to handle quantity updates if onUpdateItem is provided
+    const updateQuantity = (itemId, delta) => {
+        if (!onUpdateItem) return;
+        const item = items.find(i => i.id === itemId);
+        if (!item) return;
+
+        const newQty = item.quantity + delta;
+        if (newQty > 0) {
+            onUpdateItem(itemId, { quantity: newQty });
+        } else {
+            // newQty 0 means remove? Or just stop at 1? Usually remove or stop.
+            // Let's stop at 1 and let Trash button handle removal to avoid accidents.
+        }
+    };
 
     if (items.length === 0) {
         return null;
@@ -44,7 +61,18 @@ export default function Cart({ items, onRemove, onComplete, onUpdateItem }) {
                     <div key={`${item.id}-${index}`} className={styles.item}>
                         <div className={styles.itemInfo}>
                             <span className={styles.itemName}>{item.name}</span>
-                            <span className={styles.itemQty}>x{item.quantity}</span>
+                            <div className={styles.qtyControls}>
+                                <button
+                                    className={styles.qtyBtn}
+                                    onClick={() => updateQuantity(item.id, -1)}
+                                    disabled={item.quantity <= 1}
+                                >-</button>
+                                <span className={styles.itemQty}>{item.quantity}</span>
+                                <button
+                                    className={styles.qtyBtn}
+                                    onClick={() => updateQuantity(item.id, 1)}
+                                >+</button>
+                            </div>
                         </div>
                         <div className={styles.itemPrice}>{item.price * item.quantity} ₺</div>
                         <button onClick={() => onRemove(item.id)} className={styles.removeBtn}>
